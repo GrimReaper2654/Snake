@@ -18,7 +18,6 @@ function clearCanvas(canvas, start, size) {
     var c = document.getElementById(canvas);
     var ctx = c.getContext("2d");
     ctx.clearRect(start.x, start.y, size.x, size.y);
-    console.log(start,size);
 }
 
 function sleep(ms) {
@@ -128,85 +127,89 @@ async function game() {
     drawPolygon('game', square, absolutePos(apple), colours.apple);
 
     // main game loop
+    let t = 0;
+    let newHeadding = headding;
     while (true) {
-        console.log('runing');
         // handle inputs
         if ((keyboard.w || keyboard.arrowup) && headding != 'S') {
-            headding = 'N';
+            newHeadding = 'N';
             keyboard.w = false;
             keyboard.arrowup = false;
         } else if ((keyboard.a || keyboard.arrowleft) && headding != 'E') {
-            headding = 'W';
+            newHeadding = 'W';
             keyboard.a = false;
             keyboard.arrowleft = false;
         } else if ((keyboard.s || keyboard.arrowdown) && headding != 'N') {
-            headding = 'S';
+            newHeadding = 'S';
             keyboard.s = false;
             keyboard.arrowdown = false;
         } else if ((keyboard.d || keyboard.arrowright) && headding != 'W') {
-            headding = 'E';
+            newHeadding = 'E';
             keyboard.d = false;
             keyboard.arrowright = false;
         }
-
-        // move snake
-        let newHead = JSON.parse(JSON.stringify(snake[snake.length-1])); // deep copy the old snake head
-        switch (headding) {
-            case 'N':
-                newHead.y--;
-                break;
-            case 'E':
-                newHead.x++;
-                break;
-            case 'S':
-                newHead.y++;
-                break;
-            case 'W':
-                newHead.x--;
-                break;
-            default:
-                console.error(`Unknown headding: ${headding}`);
-                return;
-        }
-
-        // check if dead
-        if (newHead.x < 0 || newHead.x > 79) break;
-        if (newHead.y < 0 || newHead.y > 79) break;
-        let selfCollision = false
-        for (let i = 0; i < snake.length; i++) {
-            if (newHead.x == snake[i].x && newHead.y == snake[i].y) {
-                selfCollision = true;
-                break;
+        if (t%6 == 0) { // handle physics
+            // move snake
+            headding = newHeadding;
+            let newHead = JSON.parse(JSON.stringify(snake[snake.length-1])); // deep copy the old snake head
+            switch (headding) {
+                case 'N':
+                    newHead.y--;
+                    break;
+                case 'E':
+                    newHead.x++;
+                    break;
+                case 'S':
+                    newHead.y++;
+                    break;
+                case 'W':
+                    newHead.x--;
+                    break;
+                default:
+                    console.error(`Unknown headding: ${headding}`);
+                    return;
             }
-        }
-        if (selfCollision) break;
 
-        // check if apple eaten and shorten snake
-        if ((apple.x != newHead.x || apple.y != newHead.y)) {
-            // didn't eat apple, remove last snake segment
-            let toRemove = snake.shift();
-            if (toRemove) clearCanvas('game', absolutePos(toRemove), {x: 10, y: 10}); 
-        } else {
-            // did eat apple, create new apple
-            let success = false;
-            while (!success) {
-                success = true;
-                apple.x = randint(0,79);
-                apple.y = randint(0,79);
-                for (let i = 0; i < snake.length; i++) {
-                    if (apple.x == snake[i].x && apple.y == snake[i].y) {
-                        success = false
-                        break;
-                    }
+            // check if dead
+            if (newHead.x < 0 || newHead.x > 79) break;
+            if (newHead.y < 0 || newHead.y > 79) break;
+            let selfCollision = false
+            for (let i = 0; i < snake.length; i++) {
+                if (newHead.x == snake[i].x && newHead.y == snake[i].y) {
+                    selfCollision = true;
+                    break;
                 }
             }
-            drawPolygon('game', square, absolutePos(apple), colours.apple);
-        }
+            if (selfCollision) break;
 
-        grid(10);
-        drawPolygon('game', square, absolutePos(newHead), colours.snake);
-        snake.push(newHead);
-        await sleep(100);
+            // check if apple eaten and shorten snake
+            if ((apple.x != newHead.x || apple.y != newHead.y)) {
+                // didn't eat apple, remove last snake segment
+                let toRemove = snake.shift();
+                if (toRemove) clearCanvas('game', absolutePos(toRemove), {x: 10, y: 10}); 
+            } else {
+                // did eat apple, create new apple
+                let success = false;
+                while (!success) {
+                    success = true;
+                    apple.x = randint(0,79);
+                    apple.y = randint(0,79);
+                    for (let i = 0; i < snake.length; i++) {
+                        if (apple.x == snake[i].x && apple.y == snake[i].y) {
+                            success = false
+                            break;
+                        }
+                    }
+                }
+                drawPolygon('game', square, absolutePos(apple), colours.apple);
+            }
+
+            grid(10);
+            drawPolygon('game', square, absolutePos(newHead), colours.snake);
+            snake.push(newHead);
+        }
+        t++;
+        await sleep(100/6);
     }
     document.getElementById('gameOver').style.display = 'block';
     document.getElementById('startButton').innerHTML = `<button onclick="game()"><h3>Start Game</h3></button>`;
