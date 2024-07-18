@@ -21,33 +21,9 @@ function clearCanvas(canvas, start, size) {
     console.log(start,size);
 }
 
-function offsetPoints(points, offset) {
-    for (let i = 0; i < points.length; i++){
-        points[i].x += offset.x;
-        points[i].y += offset.y;
-    }
-    return points;
-}
-
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-function toColour(colour) {
-    return `rgba(${colour.r}, ${colour.g}, ${colour.b}, ${colour.a})`;
-}
-
-function displaytxt(txt, pos) {
-    var canvas = document.getElementById("canvasOverlay");
-    var ctx = canvas.getContext("2d");
-    // Set the font and text color
-    ctx.font = "20px Verdana";
-    ctx.fillStyle = "rgba(0, 0, 0, 1)";
-
-    // Display the text on canvas
-    ctx.fillText(txt, pos.x+50, pos.y+50);
-    ctx.stroke();
-};
 
 function drawPolygon(canvas, points, offset, style, debug=false) {
     if (points.length < 3) {
