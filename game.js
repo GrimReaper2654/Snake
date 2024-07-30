@@ -97,11 +97,11 @@ function generateApple(snake, evil=true) {
     if (evil) {
         let apple = {x: 0, y: 0};
         if (randint(0,5)) {
-            if (snake[i].x > 59) apple.x = randint(0,19);
-            else if (snake[i].x < 20) apple.x = randint(60,79);
+            if (snake[snake.length-1].x > 59) apple.x = randint(0,19);
+            else if (snake[snake.length-1].x < 20) apple.x = randint(60,79);
             else apple.x = randint(0,79);
-            if (snake[i].y > 59) apple.y = randint(0,19);
-            else if (snake[i].y < 20) apple.y = randint(60,79);
+            if (snake[snake.length-1].y > 59) apple.y = randint(0,19);
+            else if (snake[snake.length-1].y < 20) apple.y = randint(60,79);
             else apple.y = randint(0,79);
         }
         else apple = {x: randint(0,1)*79, y: randint(0,1)*79};
@@ -251,6 +251,14 @@ async function game() {
         t++;
         await sleep(100/6);
     }
+    let highscore = localStorage.getItem('snakeHighscore');
+    if (highscore) highscore = Math.max(highscore, snake.length-3);
+    else highscore = snake.length-3;
+    localStorage.setItem('snakeHighscore', highscore);
     document.getElementById('gameOver').style.display = 'block';
     document.getElementById('startButton').innerHTML = `<button onclick="game()"><h3>Start Game</h3></button>`;
+    document.getElementById('titleRight').innerHTML = `Highscore: ${highscore}`;
 }
+
+let highscore = localStorage.getItem('snakeHighscore');
+document.getElementById('titleRight').innerHTML = `Highscore: ${highscore? highscore : 0}`;

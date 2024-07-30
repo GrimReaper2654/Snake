@@ -25,5 +25,18 @@
     left: 50%;
     transform: translate(-50%, -50%) scale(3,3);
     display: none;
+}
 
+#titleLeft {
+    left: 0;
+    padding: 0;
+    margin: 0;
+}
+
+#titleRight {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0;
+    margin: 0;
 }
