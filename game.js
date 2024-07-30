@@ -153,7 +153,7 @@ async function game() {
     for (let i = 0; i < snake.length; i++) {
         drawPolygon('game', square, absolutePos(snake[i]), colours.snake);
     }
-    //grid(10);
+    grid(10);
 
     // main game loop
     let t = 0;
