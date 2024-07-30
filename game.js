@@ -2,13 +2,13 @@
 let keyboard = {};
 window.onkeyup = function(e) {
     keyboard[e.key.toLowerCase()] = false; 
-};
+}
 window.onkeydown = function(e) {
     keyboard[e.key.toLowerCase()] = true; 
-};
+}
 
 function randint(min, max) { 
-    if (max - min <= 1) {
+    if (max - min < 1) {
         return min;
     }
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -67,11 +67,13 @@ function drawLine(canvas, pos, r, length, style) {
     ctx.moveTo(pos.x, pos.y);
     ctx.lineTo(pos.x + length * Math.cos(r), pos.y + length * Math.sin(r));
     ctx.stroke();
-};
+}
 
-function grid(spacing) {
-    for (let i = 0; i <= 800; i += spacing) {
+function grid(spacing, start={x: 0, y: 0}, end={x: 800, y: 800}) {
+    for (let i = Math.max(start.x, 0); i <= Math.min(end.x, 800); i += spacing) {
         drawLine('game', {x: i, y: 0}, Math.PI/2, 800, {colour:'rgba(220,220,220,1)',width:2});
+    }
+    for (let i = Math.max(start.y, 0); i <= Math.min(end.y, 800); i += spacing) {
         drawLine('game', {x: 0, y: i}, 0, 800, {colour:'rgba(220,220,220,1)',width:2});
     }
 }
@@ -89,6 +91,32 @@ function vMath(v1, v2, opperation) {
         default:
             console.error(`Unknown vertor opperation: ${opperation}`);
     }
+}
+
+function generateApple(snake, evil=true) {
+    if (evil) {
+        let apple = {x: 0, y: 0};
+        if (randint(0,5)) {
+            if (snake[i].x > 59) apple.x = randint(0,19);
+            else if (snake[i].x < 20) apple.x = randint(60,79);
+            else apple.x = randint(0,79);
+            if (snake[i].y > 59) apple.y = randint(0,19);
+            else if (snake[i].y < 20) apple.y = randint(60,79);
+            else apple.y = randint(0,79);
+        }
+        else apple = {x: randint(0,1)*79, y: randint(0,1)*79};
+        let success = true;
+            for (let i = 0; i < snake.length; i++) {
+                if (apple.x == snake[i].x && apple.y == snake[i].y) {
+                    success = false
+                    break;
+                }
+            }
+            if (success) return apple;
+            else return generateApple(snake, false);
+            
+    }
+    return {x: randint(0,79), y: randint(0,79)};
 }
 
 async function game() {
@@ -113,18 +141,19 @@ async function game() {
         {x: 0, y: 0},
         {x: 1, y: 0},
     ]; 
-    let apple = {x: randint(10,79), y: randint(10,79)}; // apple can't spawn near snake
+    let speed = 7;
     let headding = 'E'; // uses cardinal directions N E S W
+    let apple = {x: randint(10,79), y: randint(10,79)}; // apple can't spawn near snake at the start
 
     // set up game
     document.getElementById('startButton').innerHTML = `<button><h3>Game Started</h3></button>`;
     document.getElementById('gameOver').style.display = 'none';
     clearCanvas('game', {x: 0, y: 0}, {x: 800, y: 800}); 
-    grid(10);
+    drawPolygon('game', square, absolutePos(apple), colours.apple);
     for (let i = 0; i < snake.length; i++) {
         drawPolygon('game', square, absolutePos(snake[i]), colours.snake);
     }
-    drawPolygon('game', square, absolutePos(apple), colours.apple);
+    //grid(10);
 
     // main game loop
     let t = 0;
@@ -148,7 +177,7 @@ async function game() {
             keyboard.d = false;
             keyboard.arrowright = false;
         }
-        if (t%6 == 0) { // handle physics
+        if (t%speed == 0) { // handle physics
             // move snake
             headding = newHeadding;
             let newHead = JSON.parse(JSON.stringify(snake[snake.length-1])); // deep copy the old snake head
@@ -181,30 +210,41 @@ async function game() {
                 }
             }
             if (selfCollision) break;
-
             // check if apple eaten and shorten snake
             if ((apple.x != newHead.x || apple.y != newHead.y)) {
                 // didn't eat apple, remove last snake segment
                 let toRemove = snake.shift();
-                if (toRemove) clearCanvas('game', absolutePos(toRemove), {x: 10, y: 10}); 
+                if (toRemove) {
+                    clearCanvas('game', absolutePos(toRemove), {x: 10, y: 10}); 
+                    
+                }
             } else {
                 // did eat apple, create new apple
-                let success = false;
-                while (!success) {
-                    success = true;
-                    apple.x = randint(0,79);
-                    apple.y = randint(0,79);
-                    for (let i = 0; i < snake.length; i++) {
-                        if (apple.x == snake[i].x && apple.y == snake[i].y) {
-                            success = false
-                            break;
-                        }
-                    }
-                }
+                apple = generateApple(snake);
+                if (snake.length == 4) speed = 6;
+                if (snake.length == 9) speed = 5;
+                if (snake.length == 19) speed = 4;
+                if (snake.length == 29) speed = 3;
+                if (snake.length == 49) speed = 2;
+                if (snake.length == 99) speed = 1;
+                console.log(speed);
                 drawPolygon('game', square, absolutePos(apple), colours.apple);
+                grid(10, absolutePos(apple), absolutePos(vMath(apple, {x: 1, y: 1}, '+')));
             }
 
-            grid(10);
+            // Draw grid only around snake
+            let start = {x: 79, y: 79};
+            let end = {x: 0, y: 0};
+            for (let i = 0; i < snake.length; i++) {
+                if (snake[i].x < start.x) start.x = snake[i].x;
+                if (snake[i].y < start.y) start.y = snake[i].y;
+                if (snake[i].x > end.x) end.x = snake[i].x;
+                if (snake[i].y > end.y) end.y = snake[i].y;
+            }
+            start = absolutePos(vMath(start, {x: 1, y: 1}, '-'));
+            end = absolutePos(vMath(end, {x: 2, y: 2}, '+'));
+            grid(10, start, end);
+
             drawPolygon('game', square, absolutePos(newHead), colours.snake);
             snake.push(newHead);
         }
